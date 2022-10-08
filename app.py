@@ -1,7 +1,7 @@
 import os
 import enum
 from pkgutil import extend_path
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from datetime import date
@@ -23,18 +23,19 @@ class FileType(enum.Enum):
     xml = "xml"
     jpeg = "jpeg"
 
+
 # Tables
 class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.Enum(FileType), nullable=False)
-    filename = db.Column(db.String(80), nullable=False)
+    filename = db.Column(db.String(80), unique=True, nullable=False)
     description = db.Column(db.String(80), nullable=False)
     date = db.Column(db.Date, default=date.today)
 
 
 @app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template("index.html", files=File.query.all())
 
 
 def get_nonconflicting_filename(filename: str):
@@ -52,12 +53,25 @@ def upload():
     type = upload.mimetype.split("/")[1]
     filename = get_nonconflicting_filename(upload.filename)
     
-    file = File(type=type, filename=filename, description="")
+    file = File(type=type, filename=filename, description=request.form["description"])
     db.session.add(file)
     db.session.commit()
 
     upload.save(os.path.join(UPLOAD_FOLDER, filename))
 
+    return redirect("/")
+
+
+@app.route('/uploads/<path:filename>', methods=['GET'])
+def download(filename):
+    return send_from_directory(directory=UPLOAD_FOLDER, path=filename, as_attachment=True)
+
+
+@app.route("/delete/<path:filename>", methods=['POST'])
+def delete_file(filename):
+    os.remove(os.path.join(UPLOAD_FOLDER, filename))
+    File.query.filter_by(filename=filename).delete()
+    db.session.commit()
     return redirect("/")
 
 
