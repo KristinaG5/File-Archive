@@ -15,6 +15,7 @@ UPLOAD_FOLDER = "uploads"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_PATH')
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1000 * 1000
 db = SQLAlchemy(app)
 
 #Enum
