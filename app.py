@@ -1,6 +1,5 @@
 import os
 import enum
-from pkgutil import extend_path
 from flask import Flask, render_template, request, redirect, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
